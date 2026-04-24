@@ -1,22 +1,24 @@
 import React, { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
-
+import React, { useRef, useState, useEffect, useCallback } from "react";
 function App() {
   const webcamRef = useRef(null);
   const ws = useRef(null);
   const [result, setResult] = useState({ boxes: [], detections: [] });
 
-  let lastAlarmTime = 0;
+  
 
-  const playAlarm = () => {
-    const now = Date.now();
-    if (now - lastAlarmTime < 3000) return; // prevent spam
-    lastAlarmTime = now;
+  const lastAlarmTime = useRef(0);
 
-    const audio = new Audio("/alarm.mp3");
-    audio.play().catch(() => {});
-  };
+const playAlarm = useCallback(() => {
+  const now = Date.now();
+  if (now - lastAlarmTime.current < 3000) return;
 
+  lastAlarmTime.current = now;
+
+  const audio = new Audio("/alarm.mp3");
+  audio.play().catch(() => {});
+}, []);
   // 🔌 WebSocket connection
   useEffect(() => {
   ws.current = new WebSocket("wss://powdery-tarantula-ooze.ngrok-free.dev/ws");
