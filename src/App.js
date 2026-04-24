@@ -1,26 +1,34 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import Webcam from "react-webcam";
+
 function App() {
   const webcamRef = useRef(null);
   const ws = useRef(null);
-  const [result, setResult] = useState({ boxes: [], detections: [] });
 
-  
+  const [result, setResult] = useState({
+    boxes: [],
+    detections: [],
+    theft_alert: false,
+    abandoned_alert: false,
+  });
 
   const lastAlarmTime = useRef(0);
 
-const playAlarm = useCallback(() => {
-  const now = Date.now();
-  if (now - lastAlarmTime.current < 3000) return;
+  // 🔊 Alarm function
+  const playAlarm = useCallback(() => {
+    const now = Date.now();
 
-  lastAlarmTime.current = now;
+    if (now - lastAlarmTime.current < 3000) return;
 
-  const audio = new Audio("/alarm.mp3");
-  audio.play().catch(() => {});
-}, [playAlarm]);
+    lastAlarmTime.current = now;
+
+    const audio = new Audio("/alarm.mp3");
+    audio.play().catch(() => {});
+  }, []);
+
   // 🔌 WebSocket connection
   useEffect(() => {
-  ws.current = new WebSocket("wss://powdery-tarantula-ooze.ngrok-free.dev/ws");
+    ws.current = new WebSocket("wss://powdery-tarantula-ooze.ngrok-free.dev/ws");
 
     ws.current.onopen = () => {
       console.log("✅ WebSocket connected");
@@ -37,7 +45,6 @@ const playAlarm = useCallback(() => {
         if (data.theft_alert || data.abandoned_alert) {
           playAlarm();
         }
-
       } catch (e) {
         console.error("Bad data:", e);
       }
@@ -51,8 +58,10 @@ const playAlarm = useCallback(() => {
       console.log("❌ WebSocket closed");
     };
 
-    return () => ws.current.close();
-  }, []);
+    return () => {
+      if (ws.current) ws.current.close();
+    };
+  }, [playAlarm]);
 
   // 📷 Send frames safely
   useEffect(() => {
@@ -68,8 +77,7 @@ const playAlarm = useCallback(() => {
       } catch (e) {
         console.error("Send error:", e);
       }
-
-    }, 1000); // ⚡ safer rate
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -86,7 +94,6 @@ const playAlarm = useCallback(() => {
           videoConstraints={{ width: 640, height: 480 }}
         />
 
-        {/* 🟥 Bounding boxes */}
         {Array.isArray(result.boxes) &&
           result.boxes.map((det, index) => {
             if (!det.box) return null;
@@ -105,7 +112,7 @@ const playAlarm = useCallback(() => {
                   height: y2 - y1,
                   color: "red",
                   fontWeight: "bold",
-                  pointerEvents: "none"
+                  pointerEvents: "none",
                 }}
               >
                 {det.label}
@@ -114,12 +121,11 @@ const playAlarm = useCallback(() => {
           })}
       </div>
 
-      {/* 🚨 Alerts */}
-      {result?.theft_alert && (
+      {result.theft_alert && (
         <h2 style={{ color: "red" }}>🚨 EQUIPMENT REMOVED!</h2>
       )}
 
-      {result?.abandoned_alert && (
+      {result.abandoned_alert && (
         <h2 style={{ color: "orange" }}>🚨 ABANDONED ITEM!</h2>
       )}
     </div>
