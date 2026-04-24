@@ -1,6 +1,5 @@
-import React, { useRef, useState, useEffect } from "react";
-import Webcam from "react-webcam";
 import React, { useRef, useState, useEffect, useCallback } from "react";
+import Webcam from "react-webcam";
 function App() {
   const webcamRef = useRef(null);
   const ws = useRef(null);
@@ -18,7 +17,7 @@ const playAlarm = useCallback(() => {
 
   const audio = new Audio("/alarm.mp3");
   audio.play().catch(() => {});
-}, []);
+}, [playAlarm]);
   // 🔌 WebSocket connection
   useEffect(() => {
   ws.current = new WebSocket("wss://powdery-tarantula-ooze.ngrok-free.dev/ws");
